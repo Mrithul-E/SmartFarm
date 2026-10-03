@@ -4,11 +4,12 @@
 
   const CONFIG = {
     host: "test.mosquitto.org",
-    port: window.location.protocol === "https:" ? 8081 : 8080,
+    port: 8081,
     path: "/mqtt",
-    useSSL: window.location.protocol === "https:",
+    useSSL: true,
     prefix: "sreehari32/"
   };
+  const SERVICE_WORKER_VERSION = "18";
 
   const state = {
     brokerConnected: false,
@@ -129,6 +130,7 @@
       message.destinationName = `${CONFIG.prefix}${topic}`;
       message.qos = 0;
       state.client.send(message);
+      if (["Gate", "Light"].includes(topic)) console.log("[SmartFarm MQTT] sent", { topic, payload: String(payload) });
       addActivity(message.destinationName, payload, true);
       if (feedback) showToast(feedback);
       return true;
@@ -142,6 +144,7 @@
   function handleMessage(topic, payload) {
     const key = topic.replace(CONFIG.prefix, "");
     const value = String(payload).trim();
+    if (["Lightr", "Gater", "Gate", "Light"].includes(key)) console.log("[SmartFarm MQTT] received", { topic: key, payload: value });
     switch (key) {
       case "Temp": $("#temp-value").html(numberOrDash(value, "<small>°C</small>")); break;
       case "Hum": $("#hum-value").html(numberOrDash(value, "<small>%</small>")); break;
@@ -262,7 +265,20 @@
       if (state.client && state.brokerConnected) state.client.disconnect();
       connect();
     });
-    if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(error => console.warn("Service worker registration failed", error));
+    if ("serviceWorker" in navigator && ["http:", "https:"].includes(window.location.protocol)) {
+      let reloadingForUpdate = false;
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (!reloadingForUpdate) {
+          reloadingForUpdate = true;
+          window.location.reload();
+        }
+      });
+      navigator.serviceWorker.register(`sw.js?v=${SERVICE_WORKER_VERSION}`, { updateViaCache: "none" })
+        .then(registration => registration.update())
+        .catch(error => console.warn("Service worker registration failed", error));
+    } else if (window.location.protocol === "file:") {
+      console.info("[SmartFarm] Open this project through a local HTTP server to enable PWA caching and installation.");
+    }
     connect();
   });
 })(jQuery);

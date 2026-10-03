@@ -5,7 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#0b1210" />
     <meta name="description" content="SmartFarm live MQTT garden monitoring and control." />
-    <link rel="manifest" href="manifest.webmanifest" />
+    <script>
+      if (["http:", "https:"].includes(window.location.protocol)) {
+        const manifest = document.createElement("link");
+        manifest.rel = "manifest";
+        manifest.href = "manifest.webmanifest";
+        document.head.append(manifest);
+      }
+    </script>
     <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="assets/icon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
