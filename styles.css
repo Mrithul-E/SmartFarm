@@ -209,3 +209,10 @@ body { background: #0f0f0f; }
 .primary-action { border-color: var(--sprout); border-radius: 5px; }.metric-card, .sensor-status { border-color: #303030; border-radius: 7px; background: #181818; }.sensor-status:hover { background: #202020; }.sensor-status.detected { background: #272116; }.sensor-status.alarm { background: #2b1b1b; }
 .system-panel { border-color: #303030; border-radius: 7px; background: #181818; }.alerts-panel, .activity-panel { box-shadow: none; }.all-clear { border-radius: 5px; background: #16251c; }.alert-item { border-radius: 5px; }.reading-frequency { border-radius: 5px; }.public-broker-note { color: #9a9a9a; }
 @media (max-width: 991px) { .workspace-layout { display: block; }.side-nav { display: none; } }
+
+/* The light switch always communicates direction: left = OFF, right = ON. */
+.light-toggle { min-width: 102px; justify-content: center; gap: 7px; }
+.light-toggle-state { color: #829087; font-size: 9px; font-weight: 800; letter-spacing: .65px; transition: color .2s ease; }
+.light-toggle .light-toggle-state.is-off { color: var(--forest-deep); }
+.light-toggle.is-on .light-toggle-state.is-off { color: #829087; }
+.light-toggle.is-on .light-toggle-state.is-on { color: var(--sprout); }

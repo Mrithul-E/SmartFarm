@@ -53,16 +53,15 @@
   function updateLightToggle(value) {
     const normalized = String(value || "").trim().toUpperCase();
     state.lightActualState = normalized === "ON" || normalized === "OFF" ? normalized : null;
-    state.lightRequestedState = null;
+    if (state.lightRequestedState === state.lightActualState) state.lightRequestedState = null;
     renderLightToggle();
   }
 
   function renderLightToggle() {
-    const isOn = (state.lightActualState || state.lightRequestedState) === "ON";
+    const isOn = (state.lightRequestedState || state.lightActualState) === "ON";
     const $toggle = $("#light-toggle");
     $toggle.toggleClass("is-on", isOn)
-      .attr("aria-checked", String(isOn))
-      .find(".light-toggle-label").text(isOn ? "Turn off" : "Turn on");
+      .attr("aria-checked", String(isOn));
   }
 
   function updateDetection(selector, text, alarm) {
