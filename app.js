@@ -14,7 +14,7 @@
     brokerConnected: false,
     deviceStatus: null,
     alerts: { lowWater: false, soilDry: false, flame: false },
-    commands: { Lock: "Lock" },
+    commands: { AG: "OFF", Lock: "Lock", AI: "OFF" },
     lightActualState: null,
     client: null,
     reconnectTimer: null
@@ -73,7 +73,7 @@
   function renderAlerts() {
     const alerts = [];
     if (state.alerts.lowWater) alerts.push({ icon: "fa-glass-water", title: "LOW WATER", copy: "Tank is below the safe refill threshold." });
-    if (state.alerts.soilDry) alerts.push({ icon: "fa-wheat-awn", title: "SOIL MOISTURE LOW", copy: "The soil needs attention." });
+    if (state.alerts.soilDry) alerts.push({ icon: "fa-wheat-awn", title: "SOIL MOISTURE LOW", copy: "The soil needs attention or auto irrigation." });
     if (state.alerts.flame) alerts.push({ icon: "fa-fire-flame-curved", title: "FLAME DETECTED", copy: "Check the garden area immediately." });
     const $count = $("#alert-count").text(alerts.length).toggleClass("has-alerts", alerts.length > 0);
     const $topAlerts = $("#top-alerts-list");
@@ -237,7 +237,8 @@
       const topic = $button.data("topic");
       const previous = state.commands[topic];
       const next = previous === $button.data("on") ? $button.data("off") : $button.data("on");
-      if (publish(topic, next, `Gate security command set to ${next}.`)) {
+      const label = topic === "AG" ? "Auto gate" : topic === "AI" ? "Auto irrigation" : "Gate security";
+      if (publish(topic, next, `${label} command set to ${next}.`)) {
         state.commands[topic] = next;
         applyCommandState($button, next);
       }

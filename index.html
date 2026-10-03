@@ -79,13 +79,14 @@
         <section class="quick-controls" id="quick-controls" aria-labelledby="controls-title">
           <div class="quick-controls-heading">
             <div><p class="section-kicker">EQUIPMENT</p><h2 id="controls-title">Quick controls</h2></div>
-            <p>Manual controls for your garden.</p>
+            <p>Manual and automatic garden controls.</p>
           </div>
           <div class="row g-3">
             <div class="col-lg-4">
               <article class="control-card gate-card">
                 <div class="control-title-row"><span class="control-icon"><i class="fa-solid fa-door-open"></i></span><h3>Garden gate</h3></div>
                 <div class="control-toggles">
+                  <button class="command-chip" data-topic="AG" data-on="ON" data-off="OFF" data-state-target="#ag-state" type="button"><i class="fa-solid fa-wand-magic-sparkles"></i> Auto gate <b id="ag-state">OFF</b></button>
                   <button class="command-chip" data-topic="Lock" data-on="Unlock" data-off="Lock" data-state-target="#lock-state" data-active-when="Unlock" type="button"><i class="fa-solid fa-lock"></i> Lock <b id="lock-state">LOCKED</b></button>
                 </div>
                 <div class="control-actions two-actions">
@@ -97,6 +98,9 @@
             <div class="col-lg-4">
               <article class="control-card irrigation-card">
                 <div class="control-title-row"><span class="control-icon"><i class="fa-solid fa-faucet-drip"></i></span><h3>Irrigation</h3></div>
+                <div class="control-toggles">
+                  <button class="command-chip" data-topic="AI" data-on="ON" data-off="OFF" data-state-target="#ai-state" type="button"><i class="fa-solid fa-droplet"></i> Auto irrigation <b id="ai-state">OFF</b></button>
+                </div>
                 <div class="control-actions two-actions">
                   <button class="btn action-button secondary-action mqtt-command" data-topic="Pump" data-message="Stop" type="button"><i class="fa-solid fa-stop"></i> Stop</button>
                   <button class="btn action-button primary-action mqtt-command" data-topic="Pump" data-message="Start" type="button"><i class="fa-solid fa-play"></i> Start</button>
