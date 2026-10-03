@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0b1210" />
+    <meta name="description" content="SmartFarm live MQTT garden monitoring and control." />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="assets/icon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet" integrity="sha384-nRgPTkuX86pH8yjPJUAFuASXQSSl2/bBUiNV47vSYpKFxHJhbcrGnmlYpYJMeD7a" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="styles.css" />
+    <title>SmartFarm — Garden Control</title>
+  </head>
+  <body>
+    <div class="app-noise"></div>
+    <div class="page-shell">
+      <nav class="navbar dashboard-nav navbar-expand-lg">
+        <a class="navbar-brand d-flex align-items-center gap-3" href="#top" aria-label="SmartFarm home">
+          <span class="brand-mark"><i class="fa-solid fa-seedling"></i></span>
+          <span><strong>SmartFarm</strong><small>GARDEN CONTROL</small></span>
+        </a>
+        <div class="ms-auto d-flex align-items-center gap-2 gap-sm-3">
+          <span class="nav-status" id="broker-status" title="MQTT broker connection status">
+            <span class="status-dot"></span><span class="status-label">Connecting</span>
+          </span>
+          <button class="btn icon-button" id="reconnect-btn" type="button" title="Reconnect to MQTT" aria-label="Reconnect to MQTT">
+            <i class="fa-solid fa-rotate-right"></i>
+          </button>
+        </div>
+      </nav>
+
+      <div class="workspace-layout">
+        <aside class="side-nav" aria-label="Dashboard navigation">
+          <a class="side-nav-link is-current" href="#top"><i class="fa-solid fa-house"></i><span>Overview</span></a>
+          <a class="side-nav-link" href="#quick-controls"><i class="fa-solid fa-sliders"></i><span>Controls</span></a>
+          <a class="side-nav-link" href="#environment-title"><i class="fa-solid fa-temperature-half"></i><span>Environment</span></a>
+          <a class="side-nav-link" href="#security-title"><i class="fa-solid fa-shield-halved"></i><span>Security</span></a>
+          <span class="side-nav-divider"></span>
+          <span class="side-nav-label">SYSTEM</span>
+          <a class="side-nav-link" href="#system-title"><i class="fa-solid fa-microchip"></i><span>Device status</span></a>
+          <a class="side-nav-link" href="#alerts-title"><i class="fa-solid fa-bell"></i><span>Alerts</span></a>
+        </aside>
+
+        <main id="top">
+        <section class="alert-banner" id="live-alert-banner" aria-labelledby="live-alert-title" aria-live="polite">
+          <div class="alert-banner-heading">
+            <span class="alert-banner-icon"><i class="fa-solid fa-bell"></i></span>
+            <div><p class="section-kicker">LIVE SAFETY STATUS</p><h2 id="live-alert-title">Garden alerts</h2></div>
+          </div>
+          <div class="top-alerts-list" id="top-alerts-list">
+            <div class="top-alert-state is-safe"><i class="fa-solid fa-check"></i><span><strong>No active alerts</strong><small>Water, soil, and flame conditions are safe.</small></span></div>
+          </div>
+        </section>
+
+        <section class="dashboard-intro" aria-labelledby="dashboard-title">
+          <div>
+            <p class="eyebrow"><span></span> SMARTFARM DASHBOARD</p>
+            <h1 id="dashboard-title">Garden control <em>center</em></h1>
+            <p class="intro-copy">Live equipment controls and garden conditions.</p>
+          </div>
+          <div class="intro-system">
+            <div class="system-brief">
+              <div class="brief-icon"><i class="fa-solid fa-microchip"></i></div>
+              <div>
+                <span>ESP32 SYSTEM</span>
+                <strong id="esp-status">AWAITING STATUS</strong>
+              </div>
+              <span class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+            </div>
+            <div class="last-updated"><i class="fa-regular fa-clock"></i> <span id="last-updated">Waiting for sensor data</span></div>
+          </div>
+        </section>
+
+        <section class="quick-controls" id="quick-controls" aria-labelledby="controls-title">
+          <div class="quick-controls-heading">
+            <div><p class="section-kicker">EQUIPMENT</p><h2 id="controls-title">Quick controls</h2></div>
+            <p>Manual controls for your garden.</p>
+          </div>
+          <div class="row g-3">
+            <div class="col-lg-4">
+              <article class="control-card gate-card">
+                <div class="control-title-row"><span class="control-icon"><i class="fa-solid fa-door-open"></i></span><h3>Garden gate</h3></div>
+                <div class="control-toggles">
+                  <button class="command-chip" data-topic="Lock" data-on="Unlock" data-off="Lock" data-state-target="#lock-state" data-active-when="Unlock" type="button"><i class="fa-solid fa-lock"></i> Lock <b id="lock-state">LOCKED</b></button>
+                </div>
+                <div class="control-actions two-actions">
+                  <button class="btn action-button secondary-action mqtt-command" data-topic="Gate" data-message="Close" type="button"><i class="fa-solid fa-door-closed"></i> Close</button>
+                  <button class="btn action-button primary-action mqtt-command" data-topic="Gate" data-message="Open" type="button"><i class="fa-solid fa-door-open"></i> Open</button>
+                </div>
+              </article>
+            </div>
+            <div class="col-lg-4">
+              <article class="control-card irrigation-card">
+                <div class="control-title-row"><span class="control-icon"><i class="fa-solid fa-faucet-drip"></i></span><h3>Irrigation</h3></div>
+                <div class="control-actions two-actions">
+                  <button class="btn action-button secondary-action mqtt-command" data-topic="Pump" data-message="Stop" type="button"><i class="fa-solid fa-stop"></i> Stop</button>
+                  <button class="btn action-button primary-action mqtt-command" data-topic="Pump" data-message="Start" type="button"><i class="fa-solid fa-play"></i> Start</button>
+                </div>
+                <small class="safety-note"><i class="fa-solid fa-shield-heart"></i> Pump is protected below 10% tank level.</small>
+              </article>
+            </div>
+            <div class="col-lg-4">
+              <article class="control-card lighting-card">
+                <div class="control-title-row"><span class="control-icon"><i class="fa-solid fa-lightbulb"></i></span><h3>Garden lighting</h3></div>
+                <div class="light-controls">
+                  <button class="btn light-toggle" id="light-toggle" type="button" role="switch" aria-checked="false" aria-label="Toggle garden lighting"><span class="light-toggle-track" aria-hidden="true"><span></span></span><span class="light-toggle-label">Turn on</span></button>
+                  <label class="color-picker" for="rgb-picker"><span id="rgb-swatch"></span><input id="rgb-picker" type="color" value="#5bba72" aria-label="Choose RGB light color" /><span>RGB color</span><i class="fa-solid fa-chevron-right"></i></label>
+                </div>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <div class="row g-4 dashboard-layout">
+          <div class="col-xl-8">
+            <section class="panel environment-panel" aria-labelledby="environment-title">
+              <div class="panel-heading">
+                <div>
+                  <p class="section-kicker">SENSOR READINGS</p>
+                  <h2 id="environment-title">Environment</h2>
+                </div>
+                <span class="reading-frequency"><i class="fa-solid fa-wave-square"></i> updating live</span>
+              </div>
+              <div class="metric-grid">
+                <article class="metric-card warmth">
+                  <div class="metric-top"><span class="metric-icon"><i class="fa-solid fa-temperature-half"></i></span><span class="metric-tag">AIR</span></div>
+                  <div><strong id="temp-value">--<small>°C</small></strong><span>Temperature</span></div>
+                  <div class="metric-trace"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                </article>
+                <article class="metric-card sky">
+                  <div class="metric-top"><span class="metric-icon"><i class="fa-solid fa-droplet"></i></span><span class="metric-tag">AIR</span></div>
+                  <div><strong id="hum-value">--<small>%</small></strong><span>Humidity</span></div>
+                  <div class="metric-trace"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                </article>
+                <article class="metric-card soil">
+                  <div class="metric-top"><span class="metric-icon"><i class="fa-solid fa-wheat-awn"></i></span><span class="metric-tag">ROOTS</span></div>
+                  <div><strong id="moisture-value">--<small>%</small></strong><span>Soil moisture</span></div>
+                  <div class="progress metric-progress" role="progressbar" aria-label="Soil moisture"><div id="moisture-bar" class="progress-bar" style="width: 0%"></div></div>
+                </article>
+                <article class="metric-card water">
+                  <div class="metric-top"><span class="metric-icon"><i class="fa-solid fa-glass-water"></i></span><span class="metric-tag">TANK</span></div>
+                  <div><strong id="water-value">--<small>%</small></strong><span>Water level</span></div>
+                  <div class="progress metric-progress" role="progressbar" aria-label="Water level"><div id="water-bar" class="progress-bar" style="width: 0%"></div></div>
+                </article>
+              </div>
+            </section>
+
+            <section class="panel security-panel" aria-labelledby="security-title">
+              <div class="panel-heading">
+                <div>
+                  <p class="section-kicker">PERIMETER MONITORING</p>
+                  <h2 id="security-title">Security & presence</h2>
+                </div>
+                <span class="quiet-note"><i class="fa-solid fa-shield-heart"></i> separate sensors</span>
+              </div>
+              <div class="security-grid">
+                <article class="sensor-status" id="ir-sensor">
+                  <span class="sensor-icon"><i class="fa-solid fa-eye"></i></span>
+                  <div><span>IR gate sensor</span><strong id="ir-value">Awaiting data</strong></div>
+                  <span class="indicator"></span>
+                </article>
+                <article class="sensor-status" id="ultrasonic-sensor">
+                  <span class="sensor-icon"><i class="fa-solid fa-satellite-dish"></i></span>
+                  <div><span>Ultrasonic presence</span><strong id="us-value">Awaiting data</strong></div>
+                  <span class="indicator"></span>
+                </article>
+                <article class="sensor-status distance-status">
+                  <span class="sensor-icon"><i class="fa-solid fa-ruler-horizontal"></i></span>
+                  <div><span>Object distance</span><strong id="dist-value">-- cm</strong></div>
+                </article>
+                <article class="sensor-status flame-status" id="flame-sensor">
+                  <span class="sensor-icon"><i class="fa-solid fa-fire-flame-curved"></i></span>
+                  <div><span>Flame sensor</span><strong id="flame-value">Awaiting data</strong></div>
+                  <span class="indicator"></span>
+                </article>
+              </div>
+            </section>
+
+          </div>
+
+          <aside class="col-xl-4">
+            <section class="panel system-panel" aria-labelledby="system-title">
+              <div class="panel-heading"><div><p class="section-kicker">SYSTEM HEALTH</p><h2 id="system-title">Garden pulse</h2></div></div>
+              <div class="pulse-visual"><div class="pulse-ring"><i class="fa-solid fa-leaf"></i></div><div><strong id="system-health">Standing by</strong><span id="system-health-copy">Waiting for ESP32 connection</span></div></div>
+              <div class="system-details"><div><span>Broker</span><strong id="broker-detail">Connecting</strong></div><div><span>Device</span><strong id="device-detail">No status yet</strong></div><div><span>Topic prefix</span><strong>sreehari32/</strong></div></div>
+            </section>
+
+            <section class="panel alerts-panel" aria-labelledby="alerts-title">
+              <div class="panel-heading"><div><p class="section-kicker">ATTENTION NEEDED</p><h2 id="alerts-title">Alerts</h2></div><span class="alert-count" id="alert-count">0</span></div>
+              <div id="alerts-list" class="alerts-list">
+                <div class="all-clear"><span><i class="fa-solid fa-check"></i></span><div><strong>No active alerts</strong><p>Your garden is operating within safe thresholds.</p></div></div>
+              </div>
+            </section>
+
+            <section class="panel activity-panel" aria-labelledby="activity-title">
+              <div class="panel-heading"><div><p class="section-kicker">MQTT ACTIVITY</p><h2 id="activity-title">Recent signals</h2></div><button class="text-button" id="clear-activity" type="button">Clear</button></div>
+              <div class="activity-list" id="activity-list" aria-live="polite"><p class="activity-empty">Messages will appear here.</p></div>
+            </section>
+
+            <p class="public-broker-note"><i class="fa-solid fa-circle-exclamation"></i> This dashboard uses a public MQTT broker. Do not publish sensitive information.</p>
+          </aside>
+        </div>
+        </main>
+      </div>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toast-area" aria-live="polite" aria-atomic="true"></div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/paho-mqtt@1.1.0/paho-mqtt-min.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
