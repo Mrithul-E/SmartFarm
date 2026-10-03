@@ -16,6 +16,7 @@
     alerts: { lowWater: false, soilDry: false, flame: false },
     commands: { AG: "OFF", Lock: "Lock", AI: "OFF" },
     lightActualState: null,
+    lightRequestedState: null,
     client: null,
     reconnectTimer: null
   };
@@ -52,7 +53,12 @@
   function updateLightToggle(value) {
     const normalized = String(value || "").trim().toUpperCase();
     state.lightActualState = normalized === "ON" || normalized === "OFF" ? normalized : null;
-    const isOn = state.lightActualState === "ON";
+    state.lightRequestedState = null;
+    renderLightToggle();
+  }
+
+  function renderLightToggle() {
+    const isOn = (state.lightActualState || state.lightRequestedState) === "ON";
     const $toggle = $("#light-toggle");
     $toggle.toggleClass("is-on", isOn)
       .attr("aria-checked", String(isOn))
@@ -244,8 +250,12 @@
       }
     });
     $("#light-toggle").on("click", () => {
-      const next = state.lightActualState === "ON" ? "OFF" : "ON";
-      publish("Light", next, `Light ${next.toLowerCase()} command sent. Waiting for device state.`);
+      const current = state.lightActualState || state.lightRequestedState;
+      const next = current === "ON" ? "OFF" : "ON";
+      if (publish("Light", next, `Light ${next.toLowerCase()} command sent. Waiting for device state.`)) {
+        state.lightRequestedState = next;
+        renderLightToggle();
+      }
     });
     $("#rgb-picker").on("change", function () { sendRgb(this.value); });
     $("#clear-activity").on("click", () => $("#activity-list").html('<p class="activity-empty">Messages will appear here.</p>'));
