@@ -1,4 +1,4 @@
-const CACHE_NAME = "smartfarm-v18";
+const CACHE_NAME = "smartfarm-v19";
 const APP_SHELL = [
   "./", "index.html", "styles.css", "app.js", "manifest.webmanifest", "assets/icon.svg",
   "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap",

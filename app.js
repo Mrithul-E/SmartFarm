@@ -53,7 +53,8 @@
 
   function updateLightToggle(value) {
     const normalized = String(value || "").trim().toUpperCase();
-    state.lightActualState = normalized === "ON" || normalized === "OFF" ? normalized : null;
+    // RGB light wiring is inverted: ESP32 ON means the physical LED is off.
+    state.lightActualState = normalized === "ON" ? "OFF" : normalized === "OFF" ? "ON" : null;
     if (state.lightRequestedState === state.lightActualState) state.lightRequestedState = null;
     renderLightToggle();
   }
@@ -254,7 +255,8 @@
     $("#light-toggle").on("click", () => {
       const current = state.lightActualState || state.lightRequestedState;
       const next = current === "ON" ? "OFF" : "ON";
-      if (publish("Light", next, `Light ${next.toLowerCase()} command sent. Waiting for device state.`)) {
+      const deviceCommand = next === "ON" ? "OFF" : "ON";
+      if (publish("Light", deviceCommand, `Light set to ${next.toLowerCase()}. Waiting for device state.`)) {
         state.lightRequestedState = next;
         renderLightToggle();
       }
