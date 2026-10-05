@@ -2,11 +2,16 @@
 (function ($) {
   "use strict";
 
+  const BROKERS = [
+    { name: "EMQX", label: "EMQX (broker.emqx.io:8883)", host: "broker.emqx.io", port: 8084, path: "/mqtt", useSSL: true, tcpPort: 8883 },
+    { name: "HiveMQ", label: "HiveMQ (broker.hivemq.com:8883)", host: "broker.hivemq.com", port: 8884, path: "/mqtt", useSSL: true, tcpPort: 8883 },
+    { name: "Mosquitto", label: "Mosquitto (test.mosquitto.org:8883)", host: "test.mosquitto.org", port: 8081, path: "/mqtt", useSSL: true, tcpPort: 8883 },
+    { name: "Bevywise", label: "Bevywise (public-mqtt-broker.bevywise.com:10443)", host: "public-mqtt-broker.bevywise.com", port: 10443, path: "/mqtt", useSSL: false, tcpPort: 10443 },
+    { name: "Eclipse", label: "Eclipse (eclipseprojects.io:8883)", host: "mqtt.eclipseprojects.io", port: 443, path: "/mqtt", useSSL: true, tcpPort: 8883 }
+  ];
+  let currentBrokerIndex = 0;
+
   const CONFIG = {
-    host: "test.mosquitto.org",
-    port: 8081,
-    path: "/mqtt",
-    useSSL: true,
     prefix: "sreehari32/"
   };
   const SERVICE_WORKER_VERSION = "18";
@@ -27,28 +32,79 @@
     return Number.isFinite(numeric) ? `${numeric.toFixed(numeric % 1 ? 1 : 0)}${suffix}` : `--${suffix}`;
   };
 
+  const STATUS_ICONS = {
+    connecting: '<svg class="status-svg-icon status-icon-connecting" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity="0.25"/><path d="M12 3a9 9 0 0 1 9 9" stroke="currentColor"/></svg>',
+    online: '<svg class="status-svg-icon status-icon-online" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2v6M15 2v6M5 8h14v3a4 4 0 0 1-4 4h-6a4 4 0 0 1-4-4V8z"/><path d="M12 15v7"/></svg>',
+    offline: '<svg class="status-svg-icon status-icon-offline" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="15" width="3" height="6" rx="0.5" fill="currentColor" stroke="none"/><rect x="7" y="11" width="3" height="10" rx="0.5" fill="currentColor" stroke="none"/><rect x="12" y="7" width="3" height="14" rx="0.5" fill="currentColor" stroke="none" opacity="0.4"/><rect x="17" y="3" width="3" height="18" rx="0.5" fill="currentColor" stroke="none" opacity="0.4"/><line x1="3" y1="3" x2="21" y2="21" stroke="currentColor" stroke-width="2.5"/><line x1="21" y1="3" x2="3" y2="21" stroke="currentColor" stroke-width="2.5"/></svg>'
+  };
+
+  function updateGateMode(mode) {
+    const isAuto = mode === "auto" || mode === "ON";
+    const $container = $("#gate-mode-toggle");
+    $container.find('.mode-toggle-btn[data-mode="manual"]').toggleClass("is-active", !isAuto);
+    $container.find('.mode-toggle-btn[data-mode="auto"]').toggleClass("is-active", isAuto);
+    if (isAuto) {
+      $("#gate-actions").slideUp(150);
+    } else {
+      $("#gate-actions").slideDown(150);
+    }
+    $("#ag-state").text(isAuto ? "ON" : "OFF");
+    state.commands.AG = isAuto ? "ON" : "OFF";
+  }
+
+  function updateIrrigationMode(mode) {
+    const isAuto = mode === "auto" || mode === "ON";
+    const $container = $("#irrigation-mode-toggle");
+    $container.find('.mode-toggle-btn[data-mode="manual"]').toggleClass("is-active", !isAuto);
+    $container.find('.mode-toggle-btn[data-mode="auto"]').toggleClass("is-active", isAuto);
+    if (isAuto) {
+      $("#irrigation-actions").slideUp(150);
+    } else {
+      $("#irrigation-actions").slideDown(150);
+    }
+    $("#ai-state").text(isAuto ? "ON" : "OFF");
+    state.commands.AI = isAuto ? "ON" : "OFF";
+  }
+
   function setBrokerStatus(status) {
     const online = status === "online";
-    const $status = $("#broker-status").removeClass("online offline");
-    if (status !== "connecting") $status.addClass(status);
+    const currentStatus = online ? "online" : status === "offline" ? "offline" : "connecting";
+    const $status = $("#broker-status").removeClass("online offline connecting").addClass(currentStatus);
+    
     $status.find(".status-label").text(online ? "ONLINE" : status === "offline" ? "OFFLINE" : "CONNECTING");
-    $("#broker-detail").text(online ? "Connected" : status === "offline" ? "Unavailable" : "Connecting");
+    $status.find(".status-icon-wrapper").html(STATUS_ICONS[currentStatus] || STATUS_ICONS.connecting);
+    
+    $(".broker-detail-text, #broker-detail").text(online ? "Connected" : status === "offline" ? "Unavailable" : "Connecting");
   }
 
   function setDeviceStatus(status) {
-    const normalized = String(status || "").trim().toUpperCase();
+    let raw = String(status || "").trim();
+    let normalized = raw.toUpperCase();
+    if (["1", "CONNECTED", "ACTIVE", "TRUE", "ONLINE", "ON"].includes(normalized)) {
+      normalized = "ONLINE";
+    } else if (["0", "DISCONNECTED", "FALSE", "OFFLINE", "OFF"].includes(normalized)) {
+      normalized = "OFFLINE";
+    }
     state.deviceStatus = normalized || null;
     const online = normalized === "ONLINE";
     const known = normalized === "ONLINE" || normalized === "OFFLINE";
-    $("#esp-status").text(known ? normalized : "AWAITING STATUS");
-    $("#device-detail").text(known ? normalized : "No status yet");
+
+    const statusText = known ? normalized : (normalized || "AWAITING STATUS");
+    const detailText = known ? normalized : (normalized || "No status yet");
+
+    $("#esp-status, .esp-status-text").text(statusText);
+    $("#device-detail, .device-detail-text").text(detailText);
     $("#system-health").text(online ? "Garden is connected" : normalized === "OFFLINE" ? "Device is offline" : "Standing by");
     $("#system-health-copy").text(online ? "ESP32 is reporting from the garden" : normalized === "OFFLINE" ? "Waiting for the ESP32 to return" : "Waiting for ESP32 connection");
+
     $(".system-brief, .system-panel").removeClass("online offline device-online device-offline");
-    if (online) $(".system-brief").addClass("online");
-    if (normalized === "OFFLINE") $(".system-brief").addClass("offline");
-    if (online) $(".system-panel").addClass("device-online");
-    if (normalized === "OFFLINE") $(".system-panel").addClass("device-offline");
+    if (online) {
+      $(".system-brief").addClass("online");
+      $(".system-panel").addClass("device-online");
+    } else if (normalized === "OFFLINE") {
+      $(".system-brief").addClass("offline");
+      $(".system-panel").addClass("device-offline");
+    }
   }
 
   function updateLightToggle(value) {
@@ -142,10 +198,32 @@
     }
   }
 
+  let deviceWatchdogTimer = null;
+
+  function resetDeviceWatchdog() {
+    clearTimeout(deviceWatchdogTimer);
+    deviceWatchdogTimer = setTimeout(() => {
+      setDeviceStatus("OFFLINE");
+    }, 45000);
+  }
+
   function handleMessage(topic, payload) {
     const key = topic.replace(CONFIG.prefix, "");
     const value = String(payload).trim();
+    const keyLower = key.toLowerCase();
+
     if (["Lightr", "Gater", "Gate", "Light"].includes(key)) console.log("[SmartFarm MQTT] received", { topic: key, payload: value });
+
+    // Any incoming message from ESP32 indicates hardware activity
+    resetDeviceWatchdog();
+
+    if (["status", "state", "esp", "esp32", "device"].includes(keyLower)) {
+      setDeviceStatus(value);
+    } else if (state.deviceStatus !== "OFFLINE") {
+      // Receiving telemetry from ESP32 automatically confirms it is ONLINE
+      setDeviceStatus("ONLINE");
+    }
+
     switch (key) {
       case "Temp": $("#temp-value").html(numberOrDash(value, "<small>°C</small>")); break;
       case "Hum": $("#hum-value").html(numberOrDash(value, "<small>%</small>")); break;
@@ -169,12 +247,16 @@
       case "US": $("#us-value").text(value || "Awaiting data"); updateDetection("#ultrasonic-sensor", value, false); break;
       case "Flame": $("#flame-value").text(value || "Awaiting data"); updateDetection("#flame-sensor", value, true); if (value.toLowerCase() === "not detected") setAlert("flame", false); break;
       case "Lightr": updateLightToggle(value); break;
-      case "status": setDeviceStatus(value); break;
+      case "AG": case "AGr": updateGateMode(value); break;
+      case "AI": case "AIr": updateIrrigationMode(value); break;
+      case "status": case "Status": case "STATUS": case "state": case "State": case "STATE": setDeviceStatus(value); break;
       case "SMMA": if (value === "1") setAlert("soilDry", true); break;
       case "STMA": if (value === "1") setAlert("soilDry", false); break;
       case "WLA": if (value === "1") setAlert("lowWater", true); break;
       case "FLA": if (value === "1") setAlert("flame", true); break;
-      default: return;
+      default:
+        if (!["status", "state", "esp", "esp32", "device"].includes(keyLower)) return;
+        break;
     }
     updateTimestamp();
     addActivity(topic, value, false);
@@ -188,31 +270,46 @@
     }
     clearTimeout(state.reconnectTimer);
     setBrokerStatus("connecting");
+    
+    const broker = BROKERS[currentBrokerIndex];
     const clientId = `smartfarm-${Math.random().toString(16).slice(2, 10)}`;
-    state.client = new Paho.Client(CONFIG.host, CONFIG.port, CONFIG.path, clientId);
+    state.client = new Paho.Client(broker.host, broker.port, broker.path, clientId);
+
     state.client.onConnectionLost = response => {
       state.brokerConnected = false;
       setBrokerStatus("offline");
-      if (response.errorCode !== 0) console.warn("MQTT connection lost", response.errorMessage);
+      clearTimeout(deviceWatchdogTimer);
+      setDeviceStatus("OFFLINE");
+      if (response.errorCode !== 0) console.warn(`[MQTT] Connection lost on ${broker.name}`, response.errorMessage);
       clearTimeout(state.reconnectTimer);
-      state.reconnectTimer = setTimeout(connect, 5000);
+      currentBrokerIndex = (currentBrokerIndex + 1) % BROKERS.length;
+      $("#broker-select").val(currentBrokerIndex);
+      state.reconnectTimer = setTimeout(connect, 3000);
     };
+
     state.client.onMessageArrived = message => handleMessage(message.destinationName, message.payloadString);
+
     state.client.connect({
-      useSSL: CONFIG.useSSL,
-      timeout: 8,
+      useSSL: broker.useSSL,
+      timeout: 5,
       onSuccess: () => {
         state.brokerConnected = true;
         setBrokerStatus("online");
+        $("#broker-detail").text(`Connected (${broker.name})`);
+        $("#broker-select").val(currentBrokerIndex);
         state.client.subscribe(`${CONFIG.prefix}#`, { qos: 0 });
-        showToast("Connected to the garden MQTT stream.");
+        showToast(`Connected to MQTT broker (${broker.name}).`);
       },
       onFailure: response => {
         state.brokerConnected = false;
-        setBrokerStatus("offline");
-        console.warn("MQTT connection failed", response.errorMessage || response.errorCode);
+        console.warn(`[MQTT] Host ${broker.host} failed:`, response.errorMessage || response.errorCode);
+        currentBrokerIndex = (currentBrokerIndex + 1) % BROKERS.length;
+        $("#broker-select").val(currentBrokerIndex);
+        const nextBroker = BROKERS[currentBrokerIndex];
+        console.info(`[MQTT] Switching failover to ${nextBroker.name} (${nextBroker.host})...`);
+        setBrokerStatus("connecting");
         clearTimeout(state.reconnectTimer);
-        state.reconnectTimer = setTimeout(connect, 5000);
+        state.reconnectTimer = setTimeout(connect, 1000);
       }
     });
   }
@@ -234,6 +331,32 @@
   }
 
   $(function () {
+    $("#broker-select").on("change", function () {
+      const selectedIndex = Number.parseInt($(this).val(), 10);
+      if (!Number.isNaN(selectedIndex) && BROKERS[selectedIndex]) {
+        currentBrokerIndex = selectedIndex;
+        if (state.client && state.brokerConnected) {
+          try {
+            state.client.disconnect();
+          } catch (e) {
+            console.warn("Disconnect error", e);
+          }
+        }
+        connect();
+      }
+    });
+
+    $(".mode-toggle-btn").on("click", function () {
+      const $btn = $(this);
+      const topic = $btn.data("topic");
+      const mode = $btn.data("mode");
+      const val = $btn.data("value");
+      const label = topic === "AG" ? "Gate" : "Irrigation";
+      if (publish(topic, val, `${label} set to ${mode} mode.`)) {
+        if (topic === "AG") updateGateMode(mode);
+        if (topic === "AI") updateIrrigationMode(mode);
+      }
+    });
     $(".mqtt-command").on("click", function () {
       const $button = $(this);
       const topic = $button.data("topic");
