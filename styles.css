@@ -39,6 +39,12 @@
   box-shadow: none !important; /* Zero drop shadows - clean flat web layout */
 }
 
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  width: 100%;
+}
+
 html { scroll-behavior: smooth; }
 
 body {
@@ -49,6 +55,11 @@ body {
   font-size: 13.5px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+}
+
+.row {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
 }
 
 .app-noise { display: none; }
@@ -63,6 +74,9 @@ button:focus-visible, input:focus-visible, a:focus-visible {
   max-width: 1440px;
   margin: 0 auto;
   padding: 0 24px 40px;
+  max-width: 100vw;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 /* --------------------------------------------------------------------------
@@ -318,13 +332,42 @@ button:focus-visible, input:focus-visible, a:focus-visible {
   padding-bottom: 16px;
   border-bottom: 1px solid var(--border);
 }
+
+.page-intro-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
 .page-intro h1 {
-  margin: 0 0 6px;
+  margin: 0;
   font-size: 24px;
   font-weight: 700;
   color: var(--text-main);
   letter-spacing: -0.4px;
 }
+
+.broker-select-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-subtle);
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.broker-select-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+  margin: 0;
+}
+
 .meta-strip {
   display: flex;
   align-items: center;

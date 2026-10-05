@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#ffffff" />
     <meta name="description" content="SmartFarm live MQTT garden monitoring and control." />
     <script>
@@ -34,13 +34,6 @@
           </a>
         </div>
         <div class="header-actions">
-          <select id="broker-select" class="form-select form-select-sm broker-dropdown" aria-label="Select MQTT Broker">
-            <option value="0">EMQX (broker.emqx.io:8883)</option>
-            <option value="1">HiveMQ (broker.hivemq.com:8883)</option>
-            <option value="2">Mosquitto (test.mosquitto.org:8883)</option>
-            <option value="3">Bevywise (public-mqtt-broker.bevywise.com:10443)</option>
-            <option value="4">Eclipse (eclipseprojects.io:8883)</option>
-          </select>
           <span class="nav-status connecting" id="broker-status" title="MQTT broker connection status">
             <span class="status-icon-wrapper" id="broker-status-icon"><i class="fa-solid fa-circle-notch fa-spin status-icon-connecting" aria-hidden="true"></i></span>
             <span class="status-label">CONNECTING</span>
@@ -83,7 +76,19 @@
 
           <!-- Page Heading Section -->
           <section class="page-intro" aria-labelledby="dashboard-title">
-            <h1 id="dashboard-title">SmartFarm Control System</h1>
+            <div class="page-intro-header">
+              <h1 id="dashboard-title">SmartFarm Control System</h1>
+              <div class="broker-select-container">
+                <label for="broker-select" class="broker-select-label"><i class="fa-solid fa-server me-1"></i> Broker:</label>
+                <select id="broker-select" class="form-select form-select-sm broker-dropdown" aria-label="Select MQTT Broker">
+                  <option value="0">EMQX (broker.emqx.io:8883)</option>
+                  <option value="1">HiveMQ (broker.hivemq.com:8883)</option>
+                  <option value="2">Mosquitto (test.mosquitto.org:8883)</option>
+                  <option value="3">Bevywise (public-mqtt-broker.bevywise.com:10443)</option>
+                  <option value="4">Eclipse (eclipseprojects.io:8883)</option>
+                </select>
+              </div>
+            </div>
             <div class="meta-strip">
               <span><i class="fa-regular fa-clock"></i> <span id="last-updated">Waiting for sensor data</span></span>
               <span class="meta-divider">•</span>
